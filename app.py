@@ -15,7 +15,10 @@ API_KEY = "AIzaSyCA2RrGdGusei2dmc7LViK86AwDPNN9klE"
 
 # รายชื่อ Model ที่จะลองเรียกใช้ (ถ้าตัวแรกไม่ได้ จะลองตัวถัดไป)
 AVAILABLE_MODELS = [
-    "gemini-2.5-flash-preview-09-2025"
+    "gemini-2.5-flash-preview-09-2025",
+    "gemini-1.5-flash",
+    "gemini-1.5-pro",
+    "gemini-pro"
 ]
 
 # ตั้งค่าหน้าเว็บ
@@ -102,6 +105,112 @@ def fetch_career_roadmap_from_ai(career_name):
     # ถ้าลองทุกตัวแล้วยังไม่ได้
     return None, f"All models failed. Last error: {last_error}"
 
+def create_roadmap_html(data, career_name):
+    """สร้าง HTML String สำหรับดาวน์โหลดและ Print เป็น PDF"""
+    month1 = data.get('month1', {})
+    month2 = data.get('month2', {})
+    month3 = data.get('month3', {})
+
+    def get_weeks_html(weeks):
+        html = ""
+        for i, item in enumerate(weeks):
+            link = item.get('link', '#')
+            html += f"""
+            <div class="week-item">
+                <span class="week-title">🗓 {item['week']}: {item['topic']}</span>
+                <span class="week-desc">{item['desc']}</span><br>
+                <a class="week-link" href="{link}" target="_blank">🔗 แหล่งข้อมูล / โปรเจกต์</a>
+            </div>"""
+            if i < len(weeks) - 1:
+                html += '<div class="dashed-line"></div>'
+        return html
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html lang="th">
+    <head>
+        <meta charset="UTF-8">
+        <title>Roadmap: {career_name}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+        <style>
+            body {{ font-family: 'Prompt', sans-serif; background-color: #f8f9fa; padding: 40px; color: #2d3436; }}
+            h1 {{ text-align: center; color: #2d3436; margin-bottom: 5px; }}
+            h3 {{ text-align: center; color: #636e72; font-weight: 300; margin-bottom: 40px; }}
+            
+            .container {{ display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }}
+            .column {{ flex: 1; min-width: 300px; max-width: 400px; }}
+            
+            .month-header {{ text-align: center; font-size: 20px; font-weight: 600; margin-bottom: 15px; color: #000; }}
+            .circle-badge {{ display: inline-block; width: 30px; height: 30px; line-height: 30px; border-radius: 50%; background: #fff; text-align: center; font-weight: bold; margin-left: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border: 1px solid #ddd; }}
+            
+            .card-box {{
+                background: #fff; border-radius: 20px; padding: 25px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.05);
+                height: 100%; page-break-inside: avoid;
+            }}
+            .bg-month-1 {{ background: linear-gradient(135deg, #FFF6E5 0%, #FFF0D4 100%); }}
+            .bg-month-2 {{ background: linear-gradient(135deg, #E3F2FD 0%, #E1F5FE 100%); }}
+            .bg-month-3 {{ background: linear-gradient(135deg, #F3E5F5 0%, #EDE7F6 100%); }}
+            
+            .theme-title {{ font-size: 18px; font-weight: 600; text-align: center; margin-bottom: 20px; min-height: 50px; display: flex; align-items: center; justify-content: center; }}
+            
+            .week-item {{ margin-bottom: 15px; font-size: 14px; line-height: 1.6; }}
+            .week-title {{ font-weight: 600; display: block; margin-bottom: 4px; color: #2d3436; }}
+            .week-desc {{ color: #636e72; }}
+            .week-link {{ display: inline-block; margin-top: 5px; color: #0984e3; text-decoration: none; font-size: 13px; background: rgba(255,255,255,0.5); padding: 2px 8px; border-radius: 8px; }}
+            .dashed-line {{ border-top: 1px dashed rgba(0,0,0,0.1); margin: 15px 0; }}
+            
+            @media print {{
+                body {{ padding: 20px; background: #fff; }}
+                .container {{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }}
+                .column {{ max-width: none; }}
+                .card-box {{ box-shadow: none; border: 1px solid #ccc; }}
+                /* บังคับให้พิมพ์สีพื้นหลัง */
+                .bg-month-1, .bg-month-2, .bg-month-3 {{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+            }}
+        </style>
+    </head>
+    <body>
+        <h1>🎯 Roadmap: {career_name}</h1>
+        <h3>Personalized 3-Month Study Plan</h3>
+        
+        <div class="container">
+            <!-- Month 1 -->
+            <div class="column">
+                <div class="month-header">MONTH <span class="circle-badge">1</span></div>
+                <div class="card-box bg-month-1">
+                    <div class="theme-title">{month1.get('theme', '')}</div>
+                    <div class="content">{get_weeks_html(month1.get('weeks', []))}</div>
+                </div>
+            </div>
+            
+            <!-- Month 2 -->
+            <div class="column">
+                <div class="month-header">MONTH <span class="circle-badge">2</span></div>
+                <div class="card-box bg-month-2">
+                    <div class="theme-title">{month2.get('theme', '')}</div>
+                    <div class="content">{get_weeks_html(month2.get('weeks', []))}</div>
+                </div>
+            </div>
+            
+            <!-- Month 3 -->
+            <div class="column">
+                <div class="month-header">MONTH <span class="circle-badge">3</span></div>
+                <div class="card-box bg-month-3">
+                    <div class="theme-title">{month3.get('theme', '')}</div>
+                    <div class="content">{get_weeks_html(month3.get('weeks', []))}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align:center; margin-top: 30px; font-size: 12px; color: #aaa;">
+            Generated by Career Roadmap AI
+        </div>
+    </body>
+    </html>
+    """
+    return html_content
+
 
 # ==========================================
 # 3. UI & STYLING FUNCTIONS
@@ -132,7 +241,7 @@ def load_custom_css():
             padding-bottom: 5rem !important;
         }
 
-        /* --- Input Box Styling (Aggressive Border Removal) --- */
+         /* --- Input Box Styling (Aggressive Border Removal) --- */
         
         /* Target input container wrappers */
         div[data-testid="stForm"]{
@@ -216,16 +325,7 @@ def load_custom_css():
             display: flex; align-items: center; justify-content: center; gap: 8px;
         }
         
-        /* 
-        .circle-badge {
-            display: flex; justify-content: center; align-items: center;
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            font-size: 16px; font-weight: bold; color: #555;
-            background-color: rgba(255,255,255,0.9);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        */
+
         /* Modern Card Box Structure */
         .card-box {
             border-radius: 24px; 
@@ -274,9 +374,9 @@ def load_custom_css():
         }
 
         /* Soft Pastel Gradients for Backgrounds */
-        .bg-month-1 { background: #FFF8ED; }
-        .bg-month-2 { background: #D9F3FF; }
-        .bg-month-3 { background: #FFE5FF; }
+        .bg-month-1 { background: linear-gradient(135deg, #FFF6E5 0%, #FFF0D4 100%); }
+        .bg-month-2 { background: linear-gradient(135deg, #E3F2FD 0%, #E1F5FE 100%); }
+        .bg-month-3 { background: linear-gradient(135deg, #F3E5F5 0%, #EDE7F6 100%); }
 
         /* List Items (รายละเอียดรายสัปดาห์) */
         .week-item { 
@@ -358,8 +458,8 @@ def load_custom_css():
         .main-title {
             font-family: 'Prompt', sans-serif;
             text-align: center; color: #000000; margin: 0;
-            font-weight: 700; font-size: 3rem;
-
+            font-weight: bold;
+            font-size: 3rem;
         }
         .sub-title {
             font-family: 'Prompt', sans-serif;
@@ -419,17 +519,17 @@ def draw_month_card(st_column, month_data, bg_class, month_num):
         # ใช้ <details> แทน st.expander เพื่อให้ทุกอย่างอยู่ใน div เดียวกันจริงๆ
         # ⚠️⚠️ สำคัญ: ต้องเขียน HTML ให้ชิดซ้าย (No Indentation) เพื่อไม่ให้ Markdown แปลงเป็น Code Block ⚠️⚠️
         full_card_html = f"""
-    <div class="month-header">MONTH <span class="circle-badge">{month_num}</span></div>
-    <div class="card-box {bg_class}">
-        <div class="month-theme-title">{month_data.get("theme", f"เป้าหมายเดือนที่ {month_num}")}</div>
-        <details>
-            <summary>👇 ดูรายละเอียด & การบ้าน</summary>
-            <div style="margin-top: 15px; animation: fadeIn 0.3s ease; text-align: left;">
-                {weeks_html}
-            </div>
-        </details>
-    </div>
-    """
+<div class="month-header">MONTH <span class="circle-badge">{month_num}</span></div>
+<div class="card-box {bg_class}">
+    <div class="month-theme-title">{month_data.get("theme", f"เป้าหมายเดือนที่ {month_num}")}</div>
+    <details>
+        <summary>👇 ดูรายละเอียด & การบ้าน</summary>
+        <div style="margin-top: 15px; animation: fadeIn 0.3s ease; text-align: left;">
+            {weeks_html}
+        </div>
+    </details>
+</div>
+"""
         
         st.markdown(full_card_html, unsafe_allow_html=True)
 
@@ -533,11 +633,25 @@ def render_result_page():
         draw_month_card(c2, data.get('month2'), 'bg-month-2', '2')
         draw_month_card(c3, data.get('month3'), 'bg-month-3', '3')
 
+        # === ส่วนปุ่ม Download ===
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        col_dl_1, col_dl_2, col_dl_3 = st.columns([1, 2, 1])
+        with col_dl_2:
+            html_data = create_roadmap_html(data, career)
+            st.download_button(
+                label="📥 ดาวน์โหลด Roadmap เพื่อบันทึกเป็น PDF",
+                data=html_data,
+                file_name=f"roadmap_{career}.html",
+                mime="text/html",
+                use_container_width=True
+            )
+            st.caption("ℹ️ วิธีบันทึกเป็น PDF: เปิดไฟล์ที่ดาวน์โหลด > กด Ctrl+P (หรือ Cmd+P) > เลือก 'Save as PDF' (บันทึกเป็น PDF)")
+
     # ปุ่ม Reset
-    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-        st.button("ค้นหาอาชีพอื่น", use_container_width=True, on_click=cb_reset)
+        st.button("🔍 ค้นหาอาชีพอื่น", use_container_width=True, on_click=cb_reset)
 
 
 # ==========================================

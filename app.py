@@ -11,8 +11,25 @@ import google.generativeai as genai
 PAGE_TITLE = "Career Roadmap AI"
 PAGE_ICON = "🚀"
 # ⚠️⚠️ ใส่ API KEY ของคุณตรงนี้ ⚠️⚠️
-API_KEY = API_KEY
+try:
+    # 1. พยายามดึง Key จาก Secrets ของ Streamlit Cloud ก่อน (ปลอดภัยที่สุด)
+    if "API_KEY" in st.secrets:
+        api_key = st.secrets["API_KEY"]
+    else:
+        # 2. ถ้าไม่มีใน Secrets ให้ใช้ Key สำรองนี้ (Hardcoded)
+        api_key = "AIzaSyCA2RrGdGusei2dmc7LViK86AwDPNN9klE" 
 
+    # ตั้งค่า Google AI
+    genai.configure(api_key=api_key.strip())
+
+except Exception as e:
+    # กรณี Error จะไม่หยุดทำงานทันที แต่จะแจ้งเตือน
+    st.warning(f"⚠️ API Key Setup Warning: {e}")
+    # พยายามใช้ Key สำรองเผื่อฟลุ๊ค
+    try:
+        genai.configure(api_key="AIzaSyCA2RrGdGusei2dmc7LViK86AwDPNN9klE")
+    except:
+        pass
 # รายชื่อ Model ที่จะลองเรียกใช้ (ถ้าตัวแรกไม่ได้ จะลองตัวถัดไป)
 AVAILABLE_MODELS = [
     "gemini-2.5-flash-preview-09-2025",

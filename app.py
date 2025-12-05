@@ -11,7 +11,7 @@ import google.generativeai as genai
 PAGE_TITLE = "Career Roadmap AI"
 PAGE_ICON = "🚀"
 # ⚠️⚠️ ใส่ API KEY ของคุณตรงนี้ ⚠️⚠️
-API_KEY = "AIzaSyCA2RrGdGusei2dmc7LViK86AwDPNN9klE"
+API_KEY = st.secrets
 
 # รายชื่อ Model ที่จะลองเรียกใช้ (ถ้าตัวแรกไม่ได้ จะลองตัวถัดไป)
 AVAILABLE_MODELS = [
